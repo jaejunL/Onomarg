@@ -1,0 +1,12 @@
+torch>=2.2
+transformers>=4.40
+sentencepiece>=0.2
+librosa>=0.10
+soundfile>=0.12
+numpy>=1.26
+PyYAML>=6.0
+pycocotools>=2.0.7
+pycocoevalcap>=1.2
+phonemizer>=3.3
+panphon>=0.21
+pytest>=8.0
