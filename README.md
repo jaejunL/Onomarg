@@ -10,6 +10,8 @@ Reference code for supervised onomatopoeia transcription and label-aware, cross-
 
 No audio, human annotation, checkpoint, prediction, or local experiment output is committed. These artifacts are intentionally ignored by git.
 
+FiratESC human onomatopoeia label annotations are sourced from [jspirit01/sound-to-onomatopoeia](https://github.com/jspirit01/sound-to-onomatopoeia). Those annotations are not redistributed here.
+
 ## Quick start: evaluate any model
 
 ```bash
