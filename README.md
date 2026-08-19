@@ -10,7 +10,9 @@ Reference code for supervised onomatopoeia transcription and label-aware, cross-
 
 No audio, human annotation, checkpoint, prediction, or local experiment output is committed. These artifacts are intentionally ignored by git.
 
-FiratESC human onomatopoeia label annotations are sourced from [jspirit01/sound-to-onomatopoeia](https://github.com/jspirit01/sound-to-onomatopoeia). Those annotations are not redistributed here.
+FiratESC test audio is available from the [Firat ESC-50 Kaggle dataset](https://www.kaggle.com/datasets/buraktaci/firat-esc50), and its human onomatopoeia label annotations are sourced from [jspirit01/sound-to-onomatopoeia](https://github.com/jspirit01/sound-to-onomatopoeia). Those data are not redistributed here.
+
+The trained supervised OnomaCap-style checkpoint (`best.pt`, 1.9 GB) is available in the [Onomarg Dropbox checkpoint folder](https://www.dropbox.com/scl/fo/h8zgfrhbuwp22zpx2hl8i/AMbd31Qf_cr1YuivhLmGRwY?rlkey=8en6y3jpq3k8t0f32hz4bmhzh&st=7yj1o4g0&dl=0).
 
 ## Quick start: evaluate any model
 
