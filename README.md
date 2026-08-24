@@ -12,6 +12,8 @@ No audio, human annotation, checkpoint, prediction, or local experiment output i
 
 FiratESC test audio is available from the [Firat ESC-50 Kaggle dataset](https://www.kaggle.com/datasets/buraktaci/firat-esc50), and its human onomatopoeia label annotations are sourced from [jspirit01/sound-to-onomatopoeia](https://github.com/jspirit01/sound-to-onomatopoeia). Those data are not redistributed here.
 
+For reproducible Firat inference, [`eval2/manifests/firat_test_audio_paths_seed20.csv`](eval2/manifests/firat_test_audio_paths_seed20.csv) lists the fixed 796 Eval2 test files as paths relative to the downloaded dataset root. The complete protocol is in [`eval2/README.md`](eval2/README.md).
+
 The trained supervised OnomaCap-style checkpoint (`best.pt`, 1.9 GB) is available in the [Onomarg Dropbox checkpoint folder](https://www.dropbox.com/scl/fo/h8zgfrhbuwp22zpx2hl8i/AMbd31Qf_cr1YuivhLmGRwY?rlkey=8en6y3jpq3k8t0f32hz4bmhzh&st=7yj1o4g0&dl=0).
 
 ## Quick start: evaluate any model
