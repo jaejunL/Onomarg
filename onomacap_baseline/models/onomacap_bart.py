@@ -8,9 +8,10 @@ from .audio_encoder import HTSATEncoder
 class OnomaCapModel(nn.Module):
     def __init__(self,cfg,device=None):
         super().__init__(); self.cfg=cfg
-        self.tokenizer=BartTokenizer.from_pretrained(cfg['bart_model_id'],revision=cfg['bart_revision'])
+        bart_source=cfg['bart_local_path']
+        self.tokenizer=BartTokenizer.from_pretrained(bart_source,local_files_only=True)
         self.htsat=HTSATEncoder(cfg,train_spec_augment=True)
-        bc=BartConfig.from_pretrained(cfg['bart_model_id'],revision=cfg['bart_revision'])
+        bc=BartConfig.from_pretrained(bart_source,local_files_only=True)
         bc.decoder_start_token_id=self.tokenizer.bos_token_id
         bc.forced_eos_token_id=self.tokenizer.eos_token_id
         self.bart=BartForConditionalGeneration(bc)
