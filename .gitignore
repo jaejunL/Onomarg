@@ -1,24 +1,32 @@
+# Python environments and caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .venv/
 .env
-outputs/
-data/
-datasets/
-checkpoints/
+
+# Local datasets and pretrained/trained checkpoints
+**/datasets/
+**/checkpoints/
 *.pt
 *.ckpt
 *.pth
 *.safetensors
+
+# Generated experiment artifacts
+**/outputs/
+**/results/
+**/submissions/
+**/cache/
+**/predictions/
+wandb/
+*.log
+*.npy
+*.npz
+
+# Audio is obtained separately and is never committed
 *.wav
 *.mp3
 *.flac
-*.npz
-*.npy
-*.log
-wandb/
-cache/
-eval2/cache/
-eval2/metrics/
-eval2/predictions/
+
+# The source package onomacap_baseline/data/ is intentionally tracked.
