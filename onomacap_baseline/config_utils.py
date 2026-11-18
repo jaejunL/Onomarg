@@ -10,10 +10,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 PATH_KEYS = {
     "annotation_csv",
     "audio_root",
+    "bart_local_path",
     "htsat_checkpoint",
     "manifest_path",
     "run_dir",
     "test_output_dir",
+    "trained_checkpoint",
 }
 
 

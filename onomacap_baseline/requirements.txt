@@ -1,3 +1,5 @@
+# System requirement for pycocoevalcap METEOR: Java 8+ on PATH.
+# Recommended: OpenJDK 17 JRE (install with apt or conda; pip cannot install it).
 torch>=2.2
 transformers>=4.40
 sentencepiece>=0.2

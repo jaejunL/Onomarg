@@ -11,9 +11,11 @@ metrics use the COCO-caption BLEU, METEOR, and ROUGE implementations.
 
 ## What is not included
 
-This repository contains code and configuration only. You must obtain the
-FiratESC audio, the sound-to-onomatopoeia annotation CSV, and the AudioSet
-HTSAT checkpoint separately and comply with their licenses.
+This repository contains code plus the small BART-base configuration and
+tokenizer assets required for offline initialization. It contains no model
+weights. You must obtain the FiratESC audio, the sound-to-onomatopoeia
+annotation CSV, the AudioSet HTSAT checkpoint, and the reproduced `best.pt`
+separately and comply with their licenses.
 
 ## Expected local layout
 
@@ -30,9 +32,14 @@ onomacap_baseline/
 │           ├── <audio_file values referenced by the CSV>
 │           └── ...
 ├── checkpoints/
-│   └── pretrained/
-│       └── HTSAT_AudioSet_Saved_1.ckpt
+│   ├── pretrained/
+│   │   └── HTSAT_AudioSet_Saved_1.ckpt
+│   └── trained/
+│       └── seed20/
+│           └── best.pt
 ├── outputs/                         # generated locally; ignored by Git
+├── assets/
+│   └── bart-base/                   # config/tokenizer only; no model weights
 ├── configs/
 ├── data/                            # Python code, not dataset content
 ├── metrics/
@@ -52,6 +59,24 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+METEOR is implemented by `pycocoevalcap` and requires Java on `PATH`. Java is
+a system dependency and cannot be installed by `pip`. Install one of:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install openjdk-17-jre-headless
+
+# Conda
+conda install -c conda-forge openjdk=17
+
+java -version
+```
+
+The vendored BART config and tokenizer are loaded with
+`local_files_only=True`; training and evaluation do not download BART assets
+from Hugging Face. The BART model weights are initialized randomly, matching
+the reproduction protocol.
 
 The reproduced run used one NVIDIA RTX 3090 (24 GB), PyTorch 2.6.0, CUDA 12.4,
 and seed 20. Other compatible CUDA GPUs can be selected through
@@ -98,9 +123,18 @@ CUDA_VISIBLE_DEVICES=0 python -m training.evaluate \
   --config configs/onomacap_seed20.yaml
 ```
 
-The default checkpoint is `outputs/runs/seed20/best.pt`; predictions and test
-metrics are written to `outputs/runs/seed20/test/`. These can be overridden
-with `--checkpoint`, `--manifest`, and `--output-dir`.
+The default released checkpoint is `checkpoints/trained/seed20/best.pt`;
+predictions and test metrics are written to `outputs/runs/seed20/test/`.
+Newly trained checkpoints remain under `outputs/runs/seed20/`. Evaluation
+paths can be overridden with `--checkpoint`, `--manifest`, and `--output-dir`.
+To evaluate a newly trained checkpoint instead of the distributed reproduction
+checkpoint, run:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python -m training.evaluate \
+  --config configs/onomacap_seed20.yaml \
+  --checkpoint outputs/runs/seed20/best.pt
+```
 
 ## Reproduction result
 

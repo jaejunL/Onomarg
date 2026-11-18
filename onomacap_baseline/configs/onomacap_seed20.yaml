@@ -6,11 +6,13 @@ annotation_csv: datasets/firat_esc50/annotations/sound-to-onomatopoeia_annotatio
 audio_root: datasets/firat_esc50/audio
 htsat_checkpoint: checkpoints/pretrained/HTSAT_AudioSet_Saved_1.ckpt
 htsat_sha256: 49804bf7767809be5d5bfe9dc25f401442e0d24f242dded6b6dabea56bb645b0
+trained_checkpoint: checkpoints/trained/seed20/best.pt
 manifest_path: outputs/splits/split_manifest.jsonl
 run_dir: outputs/runs/seed20
 test_output_dir: outputs/runs/seed20/test
 bart_model_id: facebook/bart-base
 bart_revision: aadd2ab0ae0c8268c7c9693540e9904811f36177
+bart_local_path: assets/bart-base
 sample_rate: 32000
 n_fft: 1024
 hop_length: 320

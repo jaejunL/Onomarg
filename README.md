@@ -16,10 +16,11 @@ project with its own README and requirements file.
 
 ## Repository policy
 
-This repository distributes source code only. It does not contain datasets,
-audio, human annotations, pretrained weights, trained checkpoints, prediction
-files, or local experiment outputs. Follow the layout documented in each
-subproject after obtaining those artifacts from their original sources.
+This repository distributes source code and lightweight BART configuration and
+tokenizer assets only. It does not contain datasets, audio, human annotations,
+pretrained weights, trained checkpoints, prediction files, or local experiment
+outputs. Follow the layout documented in each subproject after obtaining those
+artifacts from their original sources.
 
 ## Quick links
 
