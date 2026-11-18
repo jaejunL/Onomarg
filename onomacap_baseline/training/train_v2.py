@@ -1,8 +1,9 @@
 from __future__ import annotations
 import argparse, hashlib, json, os, random, time
 from pathlib import Path
-import numpy as np, torch, yaml
+import numpy as np, torch
 from torch.utils.data import DataLoader, Sampler
+from config_utils import load_config, project_path
 from data.dataset import OnomaDataset, train_collate, eval_collate
 from models.onomacap_bart import OnomaCapModel
 from metrics.coco_caption_adapter import evaluate as metric_eval
@@ -45,10 +46,10 @@ def evaluate_model(model,loader,device,out_dir,epoch):
  metrics={k:float(v) for k,v in metric_eval(preds,refs).items()}; metrics['epoch']=epoch
  out_dir=Path(out_dir); out_dir.mkdir(parents=True,exist_ok=True); (out_dir/f'epoch_{epoch:02d}_predictions.jsonl').write_text(''.join(json.dumps(x,ensure_ascii=False)+'\n' for x in rows)); (out_dir/f'epoch_{epoch:02d}_metrics.json').write_text(json.dumps(metrics,indent=2)); return metrics
 
-def run(cfg,smoke=False,resume=None):
- if os.environ.get('CUDA_VISIBLE_DEVICES')!='1': raise RuntimeError('physical GPU 1 required')
+def run(cfg,smoke=False,resume=None,run_dir_override=None,manifest_override=None):
+ if not torch.cuda.is_available(): raise RuntimeError('OnomaCap training requires one visible CUDA GPU')
  seed_all(int(cfg['seed'])); device=torch.device('cuda:0'); model=OnomaCapModel(cfg,device=device); audit=model.load_htsat()
- manifest=str(ROOT/'outputs/splits/split_manifest.jsonl'); tok=model.tokenizer
+ manifest=str(project_path(manifest_override) if manifest_override else cfg['manifest_path']); tok=model.tokenizer
  tr=OnomaDataset(manifest,'train',tok,train=True,max_length=cfg['max_length'],max_audio_sec=cfg['max_audio_sec'],seed=cfg['seed']); va=OnomaDataset(manifest,'validation',tok,train=False,max_length=cfg['max_length'],max_audio_sec=cfg['max_audio_sec'],seed=cfg['seed'])
  if smoke: tr.items=tr.items[:160]; va.items=va.items[:8]
  batch=4 if smoke else cfg['batch_size']; workers=0 if smoke else cfg['num_workers']; epochs=1 if smoke else cfg['epochs']
@@ -57,16 +58,17 @@ def run(cfg,smoke=False,resume=None):
  total_steps=(len(all_batches[0])*epochs) if smoke else sum(len(x) for x in all_batches); warm=max(1,round(total_steps*cfg['warmup_fraction']))
  sched=torch.optim.lr_scheduler.LambdaLR(opt,lambda step:min((step+1)/warm,1.0)*(.5*(1+np.cos(np.pi*max(0,step-warm)/max(1,total_steps-warm)))))
  start_epoch=0; resume_batch=0; global_step=0; best=None
- run_dir=ROOT/'outputs/runs/seed20'; run_dir.mkdir(parents=True,exist_ok=True)
+ run_dir=project_path(run_dir_override) if run_dir_override else Path(cfg['run_dir']); run_dir.mkdir(parents=True,exist_ok=True)
  if resume:
-  cp=torch.load(resume,map_location='cpu',weights_only=False); model.load_state_dict(cp['model']); opt.load_state_dict(cp['optimizer']); sched.load_state_dict(cp['scheduler']); start_epoch=int(cp['epoch']); resume_batch=int(cp['batch_index']); global_step=int(cp['global_step']); best=cp['best']
+  cp=torch.load(project_path(resume),map_location='cpu',weights_only=False); model.load_state_dict(cp['model']); opt.load_state_dict(cp['optimizer']); sched.load_state_dict(cp['scheduler']); start_epoch=int(cp['epoch']); resume_batch=int(cp['batch_index']); global_step=int(cp['global_step']); best=cp['best']
   random.setstate(cp['python_rng']); np.random.set_state(cp['numpy_rng']); torch.set_rng_state(cp['torch_rng']); torch.cuda.set_rng_state_all(cp['cuda_rng'])
  for ei in range(start_epoch,epochs):
   model.train(); losses=[]; t0=time.time(); batches=all_batches[ei]; first=resume_batch if ei==start_epoch else 0
   dl=DataLoader(tr,batch_sampler=FixedBatchSampler(batches[first:]),num_workers=workers,collate_fn=lambda x:train_collate(x,tok.pad_token_id))
   for local_b,b in enumerate(dl):
    bi=first+local_b; opt.zero_grad(set_to_none=True); loss,_=model(b['audio'].to(device),b['labels'].to(device),b['attention_mask'].to(device)); assert torch.isfinite(loss),loss; loss.backward(); gn=torch.nn.utils.clip_grad_norm_(model.parameters(),cfg['grad_clip']); opt.step(); sched.step(); global_step+=1; losses.append(float(loss.detach()))
-   if global_step%250==0 or (smoke and global_step==10):
+   checkpoint_interval=int(cfg.get('checkpoint_interval',5000))
+   if global_step%checkpoint_interval==0 or (smoke and global_step==10):
     save_atomic({'model':model.state_dict(),'optimizer':opt.state_dict(),'scheduler':sched.state_dict(),'epoch':ei,'batch_index':bi+1,'global_step':global_step,'best':best,'sampler_batches':all_batches,'python_rng':random.getstate(),'numpy_rng':np.random.get_state(),'torch_rng':torch.get_rng_state(),'cuda_rng':torch.cuda.get_rng_state_all(),'config':cfg,'htsat_audit':audit},run_dir/f'checkpoint_step_{global_step}.pt')
    if smoke and global_step>=10: break
   vm=evaluate_model(model,DataLoader(va,batch_size=4 if smoke else cfg['batch_size'],shuffle=False,num_workers=workers,collate_fn=eval_collate),device,run_dir/'validation',ei+1)
@@ -76,7 +78,9 @@ def run(cfg,smoke=False,resume=None):
   print(json.dumps({'epoch':ei+1,'step':global_step,'loss':sum(losses)/max(1,len(losses)),'validation':vm,'best':best,'seconds':time.time()-t0,'sdp':{'flash':torch.backends.cuda.flash_sdp_enabled(),'mem_efficient':torch.backends.cuda.mem_efficient_sdp_enabled(),'math':torch.backends.cuda.math_sdp_enabled()}}),flush=True)
   resume_batch=0
   if smoke:
-   (ROOT/'outputs/smoke/_SUCCESS.json').write_text(json.dumps({'status':'COMPLETE','steps':global_step,'best':best,'determinism':'math_sdp_bicubic_warn_only'})); break
+   (run_dir/'_SMOKE_SUCCESS.json').write_text(json.dumps({'status':'COMPLETE','steps':global_step,'best':best,'determinism':'math_sdp_bicubic_warn_only'})); break
+ if not smoke:
+  (run_dir/'_SUCCESS.json').write_text(json.dumps({'status':'TRAINING_COMPLETE','best':best,'global_step':global_step,'run_dir':str(run_dir)},indent=2)+'\n')
  return best
 if __name__=='__main__':
- ap=argparse.ArgumentParser(); ap.add_argument('--config',required=True); ap.add_argument('--smoke',action='store_true'); ap.add_argument('--resume'); a=ap.parse_args(); cfg=yaml.safe_load(Path(a.config).read_text()); run(cfg,a.smoke,a.resume)
+ ap=argparse.ArgumentParser(); ap.add_argument('--config',required=True); ap.add_argument('--smoke',action='store_true'); ap.add_argument('--resume'); ap.add_argument('--run-dir'); ap.add_argument('--manifest'); a=ap.parse_args(); cfg=load_config(a.config); run(cfg,a.smoke,a.resume,a.run_dir,a.manifest)

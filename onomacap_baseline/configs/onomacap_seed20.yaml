@@ -1,0 +1,32 @@
+# Paths are resolved from the onomacap_baseline directory, independent of cwd.
+# Data and checkpoints are intentionally not distributed with this repository.
+experiment_id: onomacap_baseline_seed20
+seed: 20
+annotation_csv: datasets/firat_esc50/annotations/sound-to-onomatopoeia_annotation.csv
+audio_root: datasets/firat_esc50/audio
+htsat_checkpoint: checkpoints/pretrained/HTSAT_AudioSet_Saved_1.ckpt
+htsat_sha256: 49804bf7767809be5d5bfe9dc25f401442e0d24f242dded6b6dabea56bb645b0
+manifest_path: outputs/splits/split_manifest.jsonl
+run_dir: outputs/runs/seed20
+test_output_dir: outputs/runs/seed20/test
+bart_model_id: facebook/bart-base
+bart_revision: aadd2ab0ae0c8268c7c9693540e9904811f36177
+sample_rate: 32000
+n_fft: 1024
+hop_length: 320
+f_min: 50
+f_max: 14000
+n_mels: 64
+max_audio_sec: 10
+batch_size: 16
+num_workers: 8
+epochs: 20
+learning_rate: 3.0e-5
+weight_decay: 1.0e-6
+warmup_fraction: 0.05
+grad_clip: 2.0
+label_smoothing: 0.1
+max_length: 30
+min_length: 2
+num_beams: 3
+checkpoint_interval: 5000
